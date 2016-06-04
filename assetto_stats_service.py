@@ -28,13 +28,19 @@ def api_tracks(request):
 
 def api_track_bestlaps(request):
     track_name = request.matchdict['track_name']
-    dbc = get_sqlite_dbconnection("out.db")
+    dbc = get_sqlite_dbconnection("/var/lib/hydra/assetto_stats.db")
     c = dbc.cursor()
     c.execute(
         """select driver_name, track_name, best_lap, car_name from drivers_lap
-        where track_name = ? order by car_name asc, best_lap desc""",
+        where track_name = ? order by car_name asc, best_lap asc""",
         (track_name,))
-    return c.fetchall()
+    data = c.fetchall()
+    c.execute(
+        """select last_update from drivers_lap where track_name = ? order by
+        last_update desc limit 1""", (track_name,))
+    last_update = c.fetchone()
+    return {'data': data, 'last_update': last_update['last_update']}
+
 
 if __name__ == '__main__':
     config = Configurator()
