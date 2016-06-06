@@ -15,8 +15,12 @@ This project contains the following components:
 
 ## Installation
 
- ```python setup.py install (virtualenv is recommended)```
+ ```python setup.py install```
+ or
+ ```pip install acss```
 
+ (virtualenv is recommended)
+ 
 ### Example crontab job
 ```*/2 * * * * /opt/assetto_stats_service/python27/bin/acss_cron /path/to/assetto_corsa/dedicated/server/results /opt/assetto_stats_service/acss.db```
 
