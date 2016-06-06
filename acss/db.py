@@ -74,9 +74,11 @@ class DB(object):
             query += " and %s in (%s)" % (field, ', '.join('?'*len(vals)))
             values.extend(vals)
 
+        query += " order by track_name, car_name, best_lap asc"
+        
         if limit is not None:
             query += " limit %d" % (limit,)
-        print query, values
+
         c = self.dbc.cursor()
         c.execute(query, values)
         data = c.fetchall()
