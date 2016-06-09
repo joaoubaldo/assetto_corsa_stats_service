@@ -44,128 +44,151 @@ for line in raw_proto.splitlines():
         act[name.strip()] = int(val.strip())
 
 
-f = open('ac_out', 'r')
-
-def readByte():
+def readByte(f):
     return struct.unpack('B', f.read(1))[0]
 
-def readSingle():
+def readSingle(f):
     return struct.unpack('<f', f.read(4))[0]
 
-def readVector3f():
-    return {'x':readSingle(), 'y':readSingle(), 'z':readSingle()}
+def readVector3f(f):
+    return {'x':readSingle(f), 'y':readSingle(f), 'z':readSingle(f)}
 
-def readString32():
-    length = readByte()
+def readString32(f):
+    length = readByte(f)
     return f.read(length*4).decode('utf32')
 
-def readString8():
-    length = readByte()
+def readString8(f):
+    length = readByte(f)
     return f.read(length).decode('ascii')
 
-def readUInt16():
+def readUInt16(f):
     return struct.unpack('<H', f.read(2))[0]
 
-def readUInt32():
+def readUInt32(f):
     return struct.unpack('<L', f.read(4))[0]
 
-def readInt32():
+def readInt32(f):
     return struct.unpack('<l', f.read(4))[0]
 
-def run():
-    while 1:
-        type_ = readByte()
+class ACUDPProto(object):
+
+    @classmethod
+    def process_event(cls, file_obj):
+        try:
+            type_ = readByte(file_obj)
+        except struct.error:
+            return None
+
+        event = {'type': type_}
         if type_ == act['ACSP_VERSION']:
-            readByte()  # proto version
+            event.update({'proto_version': readByte(file_obj)})
         elif type_ == act['ACSP_CAR_UPDATE']:
-            print "ACSP_CAR_UPDATE"
-            print readByte()  # car id
-            print readVector3f()  # pos
-            print readVector3f()  # vel
-            print readByte()  # gear
-            print readUInt16()  # engine
-            print readSingle()  # normalized_spline_pos
+            event.update({
+                'car_id': readByte(file_obj),
+                'pos': readVector3f(file_obj),
+                'vel': readVector3f(file_obj),
+                'gear': readByte(file_obj),
+                'engine_rpm': readUInt16(file_obj),
+                'normalized_spline_pos': readSingle(file_obj)
+            })
         elif type_ == act['ACSP_CLIENT_EVENT']:
-            print "ACSP_CLIENT_EVENT"
-            ev_type = readByte()  # ev_type
-            print readByte()  # car id
+            ev_type = readByte(file_obj)  # ev_type
+            car_id = readByte(file_obj)  # car id
             other_car_id = 255
             if ev_type == act['ACSP_CE_COLLISION_WITH_CAR']:
-                other_car_id = readByte()
+                other_car_id = readByte(file_obj)
             elif ev_type == act['ACSP_CE_COLLISION_WITH_ENV']:
                 pass
+            event.update({
+                'ev_type': ev_type,
+                'car_id': car_id,
+                'other_car_id': other_car_id,
+                'impact_speed': readSingle(file_obj),
+                'world_pos': readVector3f(file_obj),
+                'rel_pos': readVector3f(file_obj)
+            })
 
-            print readSingle()  # impact speed
-            print readVector3f()  # world_pos
-            print readVector3f()  # rel_pos
         elif type_ == act['ACSP_CAR_INFO']:
-            print "ACSP_CAR_INFO"
-            print readByte()  # car id
-            print readByte() != 0  # is connected
-            print readString32()  # model
-            print readString32()  # skin
-            print readString32()  # drivername
-            print readString32()  # driver_team
-            print readString32()  # driver_guid
+            event.update({
+                'car_id': readByte(file_obj),
+                'is_connected': readByte(file_obj) != 0,
+                'car_model': readString32(file_obj),
+                'car_skin': readString32(file_obj),
+                'driver_name': readString32(file_obj),
+                'driver_team': readString32(file_obj),
+                'driver_guid': readString32(file_obj)
+            })
         elif type_ == act['ACSP_CHAT']:
-            print "ACSP_CHAT"
-            print readByte()  # car id
-            print readString32()  # msg
+            event.update({
+                'car_id': readByte(file_obj),
+                'message': readString32(file_obj)
+            })
         elif type_ == act['ACSP_LAP_COMPLETED']:
-            print "ACSP_LAP_COMPLETED"
-            print readByte()  # car id
-            print readUInt32()  # laptime
-            print readByte()  # cuts
-            cars_count = readByte()  # cars_count
+            event.update({
+                'car_id': readByte(file_obj),
+                'lap_time': readUInt32(file_obj),
+                'cuts': readByte(file_obj),
+                'cars': []
+            })
+            cars_count = readByte(file_obj)
             for i in range(cars_count):
-                print readByte()  # rcar_id
-                print readUInt32()  # rtime
-                print readUInt16()  # rlaps
-            print readSingle()  # grip_level
+                event['cars'].append({
+                    'rcar_id': readByte(file_obj),
+                    'rtime': readUInt32(file_obj),
+                    'rlaps': readUInt16(file_obj)
+                })
+            event['grip_level'] = readSingle(file_obj)
         elif type_ == act['ACSP_END_SESSION']:
-            print "ACSP_END_SESSION"
-            print readString32()  # filename json
+            event.update({'filename': readString32(file_obj)})
         elif type_ == act['ACSP_CLIENT_LOADED']:
-            print "ACSP_CLIENT_LOADED"
-            print readByte()  # car id
+            event.update({'car_id': readByte(file_obj)})
         elif type_ == act['ACSP_CONNECTION_CLOSED']:
-            print "ACSP_CONNECTION_CLOSED"
-            print readString32()  # driver name
-            print readString32()  # driver guid
-            print readByte()  # car id
-            print readString8()  # car model
-            print readString8()  # car skin
+            event.update({
+                'driver_name': readString32(file_obj),
+                'driver_guid': readString32(file_obj),
+                'car_id': readByte(file_obj),
+                'car_model': readString8(file_obj),
+                'car_skin': readString8(file_obj)
+            })
         elif type_ == act['ACSP_ERROR']:
-            print "ACSP_ERROR"
-            print readString32()  # error
+            event.update({'message': readString32(file_obj)})
         elif type_ == act['ACSP_NEW_CONNECTION']:
-            print "ACSP_NEW_CONNECTION"
-            print readString32()  # driver name
-            print readString32()  # driver guid
-            print readByte()  # car id
-            print readString8()  # car model
-            print readString8()  # car skin
+            event.update({
+                'driver_name': readString32(file_obj),
+                'driver_guid': readString32(file_obj),
+                'car_id': readByte(file_obj),
+                'car_model': readString8(file_obj),
+                'car_skin': readString8(file_obj)
+            })
         elif type_ == act['ACSP_NEW_SESSION'] or type_ == act['ACSP_SESSION_INFO']:
-            print "New session started"
+            event.update({
+                'proto_version': readByte(file_obj),
+                'session_index': readByte(file_obj),
+                'current_sess_index': readByte(file_obj),
+                'session_count': readByte(file_obj),
+                'server_name': readString32(file_obj),
+                'track_name': readString8(file_obj),
+                'track_config': readString8(file_obj),
+                'name': readString8(file_obj),
+                'type': readByte(file_obj),
+                'time': readUInt16(file_obj),
+                'laps': readUInt16(file_obj),
+                'wait_time': readUInt16(file_obj),
+                'ambient_temp': readByte(file_obj),
+                'track_temp': readByte(file_obj),
+                'weather_graph': readString8(file_obj),
+                'elapsed_ms': readInt32(file_obj)
+            })
+        return event
 
-            print "Session Info"  # ACSP_SESSION_INFO
-            version = readByte()  # UDP Plugin protocol version, in case you miss the first ACSP_VERSION message sent by the server at startup
-            sess_index = readByte()  # The index of the session in the message
-            current_session_index = readByte()  #; // The index of the current session in the server
-            session_count = readByte()  #; // The number of sessions in the server
-            print version, sess_index, current_session_index, session_count
 
-            print readString32()  # server_name
-            print readString8()  # track_name
-            print readString8()  # track_config
-            print readString8()  # session name
-            print readByte()  # type
-            print readUInt16()  # time
-            print readUInt16()  # laps
-            print readUInt16()  # wait time
-            print readByte()  # amb temp
-            print readByte()  # road temp
-            print readString8()  # weather graphs
-            print readInt32()  # elapsedMS
+def run():
+
+    f = open('ac_out', 'r')
+    while 1:
+        event = ACUDPProto.process_event(f)
+        if event :
+            print event
+        sleep(.2)
 
 run()
