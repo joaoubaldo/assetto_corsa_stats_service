@@ -2,6 +2,12 @@ from acss.udp.client import ACUDPClient4
 from acss.udp.client import ACUDPListener
 from acss.db import DB
 
+def ms_to_mmssmmm(ms):
+    seconds = ms/1000.0
+    mmm = int((seconds - int(seconds))*1000)
+    m, s = divmod(seconds, 60)
+    return "%02d:%02d.%03d" % (m, s, mmm)
+
 class ACUDPDaemon(ACUDPListener, object):
     def __init__(self, settings):
         self.server_name = ''
@@ -50,16 +56,20 @@ class ACUDPDaemon(ACUDPListener, object):
 
     def on_ACSP_NEW_CONNECTION(self, event):
         self.cars[event['driver_guid']] = event
-        driver_row = self.db.get_best_lap(
-            event['driver_guid'], self.track, event['car_model'])
-        if driver_row:
-            self.client.broadcast_message("Best lap for %s: %d" % (
-                driver_row['driver_name'], driver_row['best_lap']))
-
 
     def on_ACSP_CONNECTION_CLOSED(self, event):
         if event['driver_guid'] in self.cars.keys():
             del self.cars[event['driver_guid']]
+
+    def on_ACSP_CLIENT_LOADED(self, event):
+        car = self.car_by_id(event['car_id'])
+        driver_row = self.db.get_best_lap(
+            car['driver_guid'], self.track, car['car_model'])
+        if driver_row:
+            self.client.broadcast_message("Welcome %s! Best lap is %s" % (
+                driver_row['driver_name'],
+                ms_to_mmssmmm(driver_row['best_lap'])
+            ))
 
     def __repr__(self):
         d = self.__dict__
