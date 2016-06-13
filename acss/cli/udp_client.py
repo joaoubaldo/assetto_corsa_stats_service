@@ -13,5 +13,4 @@ def run():
     session = ACUDPDaemon(config.merge(sys.argv[1]))
 
     while 1:
-        session.update()
-        time.sleep(0.005)
+        print session.update()

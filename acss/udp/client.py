@@ -3,6 +3,7 @@ import socket
 import sys
 from time import sleep
 import logging
+import io
 
 from acss.udp.util import *
 from acss.udp.types import ACUDPProtoTypes4
@@ -153,13 +154,13 @@ class ACUDPClient4(object):
 
     def __init__(self, port=10000, remote_port=10001):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server_address = ('localhost', port)
+        self.server_address = ('0.0.0.0', port)
         self.remote_port = remote_port
         self._subscribers = {}
 
     def listen(self):
         self.sock.bind(self.server_address)
-        self.file = self.sock.makefile()
+        self.file = io.open(self.sock.fileno(), mode='rb', buffering=4096)
 
     def subscribe(self, subscriber):
         if id(subscriber) in self._subscribers.keys():

@@ -4,7 +4,7 @@ import time
 import struct
 import logging
 
-from test_udp_proto import ACUDPServer4
+from acss.udp.client import ACUDPClient4
 
 
 logging.basicConfig(level=logging.INFO)
@@ -23,17 +23,15 @@ def client():
         while 1:
             start_pos = f.tell()
             log.debug("current file position %d" % (f.tell(),))
-            event = ACUDPServer4.consume_event(f)
+            event = ACUDPClient4.consume_event(f)
             size = f.tell()-start_pos
             f.seek(-size, 1)
             data = f.read(size)
             log.debug("Sending %s" % (
                 ':'.join([b.encode('hex') for b in data]),)
             )
-            # HACK: if sending all at once, localhost, server will discard bytes
-            for c in data:
-                sent = sock.sendto(c, server_address)
-                time.sleep(0.0001)
+            sent = sock.sendto(data, server_address)
+
     finally:
         print >>sys.stderr, 'closing socket'
         sock.close()
