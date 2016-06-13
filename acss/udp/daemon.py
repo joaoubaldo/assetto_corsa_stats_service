@@ -66,7 +66,7 @@ class ACUDPDaemon(ACUDPListener, object):
         driver_row = self.db.get_best_lap(
             car['driver_guid'], self.track, car['car_model'])
         if driver_row:
-            self.client.broadcast_message("Welcome %s! Best lap is %s" % (
+            self.client.broadcast_message("Welcome %s! Best lap is %s " % (
                 driver_row['driver_name'],
                 ms_to_mmssmmm(driver_row['best_lap'])
             ))
