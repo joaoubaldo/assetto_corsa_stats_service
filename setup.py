@@ -33,6 +33,7 @@ setup(name='acss',
       entry_points={
         'console_scripts':
             ['acss_cron = acss.cli.cron:run',
-            'acssd = acss.cli.wsgi_service:run']
+            'acssweb = acss.cli.wsgi_service:run',
+            'acssd = acss.cli.udp_client:run']
         }
       )
