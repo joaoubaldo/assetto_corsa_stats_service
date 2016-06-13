@@ -75,7 +75,7 @@ class DB(object):
             values.extend(vals)
 
         query += " order by track_name, car_name, best_lap asc"
-        
+
         if limit is not None:
             query += " limit %d" % (limit,)
 
@@ -102,10 +102,7 @@ class DB(object):
 
     def get_best_lap(self, driver_guid, track, car):
         id_ = best_lap_id(track, driver_guid, car)
-        c = self.dbc.cursor()
-        c.execute(
-            "select * from best_laps where id = ?", (id_,))
-        return c.fetchone()
+        return self.get_best_lap_by_id(id_)
 
     def insert_best_lap(self, driver_guid, driver, track, car, ballast, best_lap):
         id_ = best_lap_id(track, driver_guid, car)

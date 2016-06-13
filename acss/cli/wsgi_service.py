@@ -9,8 +9,7 @@ from pyramid.response import Response
 
 from acss.db import DB
 from acss.client import Server
-
-__VERSION__ = 0.1
+from acss.cli import config
 
 
 def api_tracks(request):
@@ -36,8 +35,7 @@ def run():
         sys.stderr.write("Usage: %s <config_file>\n" % (sys.argv[0],))
         sys.exit(1)
 
-    settings = {'db_filename': './acss.db', 'server_host': 'localhost',
-        'server_port': 8081}
+    settings = config.defaults()
     settings.update(json.loads(open(sys.argv[1]).read()))
 
     config = Configurator(settings=settings)

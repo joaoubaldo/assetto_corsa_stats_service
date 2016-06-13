@@ -1,8 +1,9 @@
-from .client import ACUDPClient4
-from .client import ACUDPListener
+from acss.udp.client import ACUDPClient4
+from acss.udp.client import ACUDPListener
+from acss.db import DB
 
-class ACUDPSession(ACUDPListener, object):
-    def __init__(self, port=10000, remote_port=10001):
+class ACUDPDaemon(ACUDPListener, object):
+    def __init__(self, settings):
         self.server_name = ''
         self.cars = {}
         self.type = ''
@@ -14,9 +15,12 @@ class ACUDPSession(ACUDPListener, object):
         self.ambient_temp = -1
         self.elapsed_ms = -1
         self.track_temp = -1
-        self.client = ACUDPClient4(port=10000, remote_port=10001)
+        self.client = ACUDPClient4(
+            port=settings['udp_bind_port'],
+            remote_port=settings['udp_remote_port'])
         self.client.listen()
         self.client.subscribe(self)
+        self.db = DB(settings['db_filename'])
 
     def update(self):
         event = self.client.read_event()
@@ -46,6 +50,12 @@ class ACUDPSession(ACUDPListener, object):
 
     def on_ACSP_NEW_CONNECTION(self, event):
         self.cars[event['driver_guid']] = event
+        driver_row = self.db.get_best_lap(
+            event['driver_guid'], self.track, event['car_model'])
+        if driver_row:
+            self.client.broadcast_message("Best lap for %s: %d" % (
+                driver_row['driver_name'], driver_row['best_lap']))
+
 
     def on_ACSP_CONNECTION_CLOSED(self, event):
         if event['driver_guid'] in self.cars.keys():
