@@ -60,7 +60,8 @@ class ACUDPDaemon(object):
         self.cars = {}
         self.client = ACUDPClient(
             port=settings['udp_bind_port'],
-            remote_port=settings['udp_remote_port'])
+            remote_port=settings['udp_remote_port'],
+            host=settings['udp_remote_host'])
         self.client.listen()
         self.client.subscribe(self)
         self.db = DB(settings['db_filename'])
@@ -94,7 +95,7 @@ class ACUDPDaemon(object):
         # Update cars in memory
         self.cars[event['driver_guid']] = event
 
-        # Callbacks for callers that expect updated car info
+        # Return to callers who expect updated car info
         if event['car_id'] in self.car_callbacks:
             cb, original_event = self.car_callbacks[event['car_id']]
             cb(self, original_event, event)
@@ -108,17 +109,6 @@ class ACUDPDaemon(object):
 
     def on_ACSP_CLIENT_EVENT(self, event):
         pass
-        # if event['other_car_id'] != 255:
-        #     car = self.car_by_id(event['car_id'])
-        #     def send_message(self, client_event, car_info):
-        #         message = "Car contact! Warning %(driver_name)s " % car_info
-        #         log.info(message)
-        #         log.info(event)
-        #         self.client.broadcast_message(message)
-        #
-        #     self.client.get_car_info(event['car_id'])
-        #     self.car_callbacks[event['car_id']] = (send_message, event)
-
 
     def on_ACSP_NEW_CONNECTION(self, event):
         self.cars[event['driver_guid']] = event
