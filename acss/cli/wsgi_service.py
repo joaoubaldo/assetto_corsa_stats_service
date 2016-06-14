@@ -9,7 +9,7 @@ from pyramid.response import Response
 
 from acss.db import DB
 from acss.client import Server
-from acss.cli import config
+from acss.cli import config as config_
 
 
 def api_tracks(request):
@@ -35,8 +35,7 @@ def run():
         sys.stderr.write("Usage: %s <config_file>\n" % (sys.argv[0],))
         sys.exit(1)
 
-    settings = config.defaults()
-    settings.update(json.loads(open(sys.argv[1]).read()))
+    settings = config_.merge(sys.argv[1])
 
     config = Configurator(settings=settings)
 
