@@ -4,7 +4,7 @@ import time
 import struct
 import logging
 
-from acss.udp.client import ACUDPClient4
+from acudpclient.client import ACUDPClient
 
 
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +23,7 @@ def client():
         while 1:
             start_pos = f.tell()
             log.debug("current file position %d" % (f.tell(),))
-            event = ACUDPClient4.consume_event(f)
+            event = ACUDPClient.consume_event(f)
             size = f.tell()-start_pos
             f.seek(-size, 1)
             data = f.read(size)
@@ -31,6 +31,7 @@ def client():
                 ':'.join([b.encode('hex') for b in data]),)
             )
             sent = sock.sendto(data, server_address)
+            time.sleep(0.002)
 
     finally:
         print >>sys.stderr, 'closing socket'
