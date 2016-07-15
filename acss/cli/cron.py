@@ -9,6 +9,10 @@ from acss.db import DB
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('acss')
 
+def track_name(d):
+    return d['TrackName'] + "-%s" % (d['TrackConfig'],)
+                            if d['TrackConfig'] else ''
+
 def load_results_from_directory(in_dir, out_db):
     db = DB(out_db)
     in_files = os.listdir(in_dir)
@@ -30,17 +34,17 @@ def load_results_from_directory(in_dir, out_db):
 
         for driver in data['Result']:
             driver_row = db.get_best_lap(
-                driver['DriverGuid'], data['TrackName'], driver['CarModel'])
+                driver['DriverGuid'], track_name(data), driver['CarModel'])
 
             def insert_driver():
                 db.insert_best_lap(
                     driver['DriverGuid'], driver['DriverName'],
-                    data['TrackName'], driver['CarModel'],
+                    track_name(data), driver['CarModel'],
                     driver['BallastKG'], driver['BestLap'])
 
             def delete_driver():
                 db.delete_best_lap(
-                    driver['DriverGuid'], data['TrackName'], driver['CarModel'])
+                    driver['DriverGuid'], track_name(data), driver['CarModel'])
 
             if driver['BestLap'] >= 999999:
                 continue

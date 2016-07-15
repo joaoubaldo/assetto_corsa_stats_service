@@ -4,6 +4,7 @@ import logging
 
 from acss.udp.daemon import ACUDPDaemon
 from acss.cli import config
+import acudpclient.exceptions
 
 log = logging.getLogger('acss_udp')
 
@@ -22,8 +23,12 @@ def run():
             current_time = time.time()
         try:
             event = session.update()
-            if event:
-                print event
+        except acudpclient.exceptions.NotEnoughBytes:
+            pass
         except Exception, e:
             log.error(e)
+            raise
+        else:
+            print event
+
         time.sleep(0.001)
