@@ -6,6 +6,7 @@ from acudpclient.client import ACUDPClient
 from acss.db import DB
 
 log = logging.getLogger('acss_udp')
+log.setLevel(logging.INFO)
 
 def ms_to_mmssmmm(ms):
     seconds = ms/1000.0
