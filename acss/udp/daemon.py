@@ -22,7 +22,7 @@ def update_best_lap_callback(self, original_event, car_info):
         car_info.driver_guid, track_name(self.session),
         car_info.car_model)
     log.info("Checking if %(driver_name)s has lap to update" % \
-        car_info)
+        car_info.__dict__)
 
     # Update best lap in DB
     lap = original_event
