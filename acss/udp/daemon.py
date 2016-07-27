@@ -14,13 +14,13 @@ def ms_to_mmssmmm(ms):
     return "%02d:%02d.%03d" % (m, s, mmm)
 
 def track_name(session):
-    return session.track_name + "-%s" % (session.track_config,)
+    return session.track_name + "-%s" % (session.track_config,) \
                                 if session.track_config else ''
 
 def update_best_lap_callback(self, original_event, car_info):
     lap_row = self.db.get_best_lap(
-        car_info['driver_guid'], track_name(self.session),
-        car_info['car_model'])
+        car_info.driver_guid, track_name(self.session),
+        car_info.car_model)
     log.info("Checking if %(driver_name)s has lap to update" % \
         car_info)
 
@@ -28,27 +28,27 @@ def update_best_lap_callback(self, original_event, car_info):
     lap = original_event
     best_lap = None
     if lap_row:
-        if lap['lap_time'] < lap_row['best_lap']:
-            best_lap = lap['lap_time']
+        if lap.lap_time < lap_row['best_lap']:
+            best_lap = lap.lap_time
     else:
-        best_lap = lap['lap_time']
-
+        best_lap = lap.lap_time
+    print best_lap
     if best_lap:
-        self.db.delete_best_lap(car_info['driver_guid'],
-            track_name(self.session), car_info['car_model'])
-        self.db.insert_best_lap(car_info['driver_guid'],
-            car_info['driver_name'],
-            track_name(self.session), car_info['car_model'], 0.0,
+        self.db.delete_best_lap(car_info.driver_guid,
+            track_name(self.session), car_info.car_model)
+        self.db.insert_best_lap(car_info.driver_guid,
+            car_info.driver_name,
+            track_name(self.session), car_info.car_model, 0.0,
             best_lap)
-        message = "%s new PB %s " % (car_info['driver_name'],
-            ms_to_mmssmmm(lap['lap_time']))
+        message = "%s new PB %s " % (car_info.driver_name,
+            ms_to_mmssmmm(lap.lap_time))
         log.info(message)
         self.client.broadcast_message(message)
 
 def welcome_callback(self, source_event, car_info):
     lap_row = self.db.get_best_lap(
-        car_info['driver_guid'], track_name(self.session),
-        car_info['car_model'])
+        car_info.driver_guid, track_name(self.session),
+        car_info.car_model)
 
     if lap_row:
         self.client.broadcast_message("Welcome %s! Best lap is %s " % (
@@ -79,7 +79,9 @@ class ACUDPDaemon(object):
                 return car
 
     def get_car_info(self, car_id, cb=None, source_event=None):
-        self.client.get_car_info(car_id)
+        if car_id not in self.car_callbacks.keys():
+            self.client.get_car_info(car_id)
+
         if cb:
             if car_id not in self.car_callbacks.keys():
                 self.car_callbacks[car_id] = (cb, source_event)
@@ -88,40 +90,58 @@ class ACUDPDaemon(object):
                     car_id,))
 
     def on_ACSP_LAP_COMPLETED(self, event):
-        if event['cuts'] == 0:
-            self.get_car_info(event['car_id'], update_best_lap_callback, event)
+        log.debug('on_ACSP_LAP_COMPLETED')
+
+        if event.cuts == 0:
+            self.get_car_info(event.car_id, update_best_lap_callback, event)
 
     def on_ACSP_CAR_UPDATE(self, event):
-        pass  # self.client.get_car_info(event['car_id'])
+        log.debug('on_ACSP_CAR_UPDATE')
+
+        pass  # self.client.get_car_info(event.car_id)
 
     def on_ACSP_CAR_INFO(self, event):
+        log.debug('on_ACSP_CAR_INFO')
+
         # Update cars in memory
-        self.cars[event['driver_guid']] = event
+        self.cars[event.driver_guid] = event
 
         # Return to callers who expect updated car info
-        if event['car_id'] in self.car_callbacks:
-            cb, original_event = self.car_callbacks[event['car_id']]
+        if event.car_id in self.car_callbacks:
+            cb, original_event = self.car_callbacks[event.car_id]
             cb(self, original_event, event)
-            del self.car_callbacks[event['car_id']]
+            del self.car_callbacks[event.car_id]
 
     def on_ACSP_SESSION_INFO(self, event):
+        log.debug('on_ACSP_SESSION_INFO')
+
         self.session = namedtuple('Session', event.__dict__.keys())(**event.__dict__)
 
     def on_ACSP_NEW_SESSION(self, event):
+        log.debug('on_ACSP_NEW_SESSION')
+
         self.on_ACSP_SESSION_INFO(event)
 
     def on_ACSP_CLIENT_EVENT(self, event):
+        log.debug('on_ACSP_CLIENT_EVENT')
+
         pass
 
     def on_ACSP_NEW_CONNECTION(self, event):
-        self.cars[event['driver_guid']] = event
+        log.debug('on_ACSP_NEW_CONNECTION')
+
+        self.cars[event.driver_guid] = event
 
     def on_ACSP_CONNECTION_CLOSED(self, event):
-        if event['driver_guid'] in self.cars.keys():
-            del self.cars[event['driver_guid']]
+        log.debug('on_ACSP_CONNECTION_CLOSED')
+
+        if event.driver_guid in self.cars.keys():
+            del self.cars[event.driver_guid]
 
     def on_ACSP_CLIENT_LOADED(self, event):
-        self.get_car_info(event['car_id'], welcome_callback, event)
+        log.debug('on_ACSP_CLIENT_LOADED')
+
+        self.get_car_info(event.car_id, welcome_callback, event)
 
     def __repr__(self):
         d = self.__dict__
