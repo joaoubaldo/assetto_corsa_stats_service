@@ -5,6 +5,7 @@ import logging
 from acss.udp.daemon import ACUDPDaemon
 from acss.cli import config
 import acudpclient.exceptions
+import acudpclient.packets
 
 log = logging.getLogger('acss_udp')
 
