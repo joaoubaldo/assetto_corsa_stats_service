@@ -79,6 +79,7 @@ class ACUDPDaemon(object):
                 return car
 
     def get_car_info(self, car_id, cb=None, source_event=None):
+        log.info("Getting car info for id %d" % (car_id,))
         if car_id not in self.car_callbacks.keys():
             self.client.get_car_info(car_id)
 
