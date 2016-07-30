@@ -1,4 +1,5 @@
 import socket
+import os
 import sys
 import time
 import struct
@@ -26,7 +27,9 @@ class TestUDPDaemon(unittest.TestCase):
         def udp_worker():
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             server_address = ('localhost', 10000)
-            f = open('test/ac_out', 'rb')
+            raw_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                    'ac_out')
+            f = open(raw_file, 'rb')
             while 1:
                 start_pos = f.tell()
                 log.debug("current file position %d" % (f.tell(),))
