@@ -2,11 +2,14 @@ from collections import namedtuple
 import logging
 
 from acudpclient.client import ACUDPClient
-
 from acss.db import DB
+import acss
+
 
 log = logging.getLogger('acss_udp')
 log.setLevel(logging.INFO)
+NAME = "ACSS-UDP"
+VERSION = acss.VERSION
 
 def ms_to_mmssmmm(ms):
     seconds = ms/1000.0
@@ -60,6 +63,7 @@ def welcome_callback(self, source_event, car_info):
 
 class ACUDPDaemon(object):
     def __init__(self, settings):
+        log.info("Startup %s-%s" % (NAME, VERSION))
         self.session = None
         self.cars = {}
         self.client = ACUDPClient(
@@ -81,6 +85,7 @@ class ACUDPDaemon(object):
 
     def get_car_info(self, car_id, cb=None, source_event=None):
         log.info("Getting car info for id %d" % (car_id,))
+
         if car_id not in self.car_callbacks.keys():
             self.client.get_car_info(car_id)
 
