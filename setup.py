@@ -10,8 +10,10 @@ with open(os.path.join(here, 'README.md')) as f:
 with open(os.path.join(here, 'requirements.txt')) as f:
     requires = f.read().splitlines()
 
+version = os.getenv('BUILD_VERSION', VERSION)
+
 setup(name='acss',
-      version=VERSION,
+      version=version,
       description='acss',
       long_description=README + '\n',
       classifiers=[
