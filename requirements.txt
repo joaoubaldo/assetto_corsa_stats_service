@@ -1,2 +1,3 @@
 pyramid
 waitress
+acudpclient>=1.0.0
