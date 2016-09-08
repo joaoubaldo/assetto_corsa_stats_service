@@ -18,8 +18,8 @@ def ms_to_mmssmmm(ms):
     return "%02d:%02d.%03d" % (m, s, mmm)
 
 def track_name(session):
-    return session.track_name + "-%s" % (session.track_config,) \
-                                if session.track_config else ''
+    return session.track_name + ("-%s" % (session.track_config,) \
+                                if session.track_config else '')
 
 def update_best_lap_callback(self, original_event, car_info):
     lap_row = self.db.get_best_lap(

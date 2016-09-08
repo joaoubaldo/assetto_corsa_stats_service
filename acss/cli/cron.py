@@ -10,8 +10,8 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('acss')
 
 def track_name(d):
-    return d['TrackName'] + "-%s" % (d['TrackConfig'],) \
-                            if d['TrackConfig'] else ''
+    return d['TrackName'] + ("-%s" % (d['TrackConfig'],) \
+                            if d['TrackConfig'] else '')
 
 def load_results_from_directory(in_dir, out_db):
     db = DB(out_db)
