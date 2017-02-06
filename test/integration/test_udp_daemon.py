@@ -49,7 +49,7 @@ class TestUDPDaemon(unittest.TestCase):
 
         udp_thread = threading.Thread(target=udp_worker)
         daemon = ACUDPDaemon({
-            'udp_bind_port': 10000,
+            'udp_bind_port': 10001,
             'udp_remote_port': 9999,
             'udp_remote_host': '127.0.0.1',
             'db_filename': ':memory:'
