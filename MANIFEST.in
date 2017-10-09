@@ -1,4 +1,4 @@
 include *.txt *.ini *.cfg *.rst *.md *.config
-recursive-include acss *.ico *.png *.css *.gif *.jpg *.pt *.txt *.mak *.mako *.js *.html *.xml *.ttf *.woff *.eot *.svg *.config
+recursive-include acss acss/web_files *.ico *.png *.css *.gif *.jpg *.pt *.txt *.mak *.mako *.js *.html *.xml *.ttf *.woff *.eot *.svg *.config
 prune .git
 exclude .gitignore

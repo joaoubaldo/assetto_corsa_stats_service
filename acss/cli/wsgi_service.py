@@ -56,7 +56,7 @@ def run():
         route_name='api_track_bestlaps_with_cars', renderer='json')
     config.add_view(api_server_info, route_name='api_server_info',
         renderer='json')
-    config.add_static_view(name='/', path='/home/hydra/workspace/own/assetto_corsa_stats_service/web_files/')
+    config.add_static_view(name='/', path='../web_files/')
 
     app = config.make_wsgi_app()
     serve(app, host='0.0.0.0', port=settings.get('listen_http_port'))
