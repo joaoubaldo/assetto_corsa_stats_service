@@ -8,7 +8,8 @@ def defaults():
         'server_port': 8081,
         'udp_bind_port': 10000,
         'udp_remote_port': 10001,
-        'udp_remote_host': '127.0.0.1'
+        'udp_remote_host': '127.0.0.1',
+        'listen_http_port': 8001
     }
     return settings
 

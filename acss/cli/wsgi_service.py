@@ -59,4 +59,4 @@ def run():
     config.add_static_view(name='/', path='/home/hydra/workspace/own/assetto_corsa_stats_service/web_files/')
 
     app = config.make_wsgi_app()
-    serve(app, host='0.0.0.0', port=8001)
+    serve(app, host='0.0.0.0', port=settings.get('listen_http_port'))
