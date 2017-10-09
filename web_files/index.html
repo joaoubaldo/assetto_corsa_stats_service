@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" ng-app="acssApp">
+
+<head>
+    <title>Assetto Corsa</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <style type="text/css">
+        body {
+            background: #161718 url(graphics/bgr_body.png) repeat-x;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            text-align: center;
+            font-size: 12pt;
+            line-height: 2em;
+        }
+
+        #last-update {
+            font-style: italic;
+            text-align: right;
+            font-size: 0.6em;
+        }
+
+        #cars {
+            margin: 0px auto;
+            padding: 0px 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 7px;
+            text-align: left;
+            overflow: auto;
+        }
+
+
+        dl {
+            width: 100%;
+            overflow: hidden;
+            padding: 1em;
+        }
+
+        dt {
+            float: left;
+            width: 50%;
+            /* adjust the width; make sure the total of both is 100% */
+            padding: 0 1em;
+            text-align: right;
+        }
+
+        dd {
+            text-align: left;
+            float: left;
+            width: 50%;
+            /* adjust the width; make sure the total of both is 100% */
+            padding: 0;
+            margin: 0;
+        }
+
+        #boxed-info {}
+
+        #tracks {
+            margin: 10px 0;
+        }
+    </style>
+
+    <script type="text/javascript">
+        function msToTime(s) {
+
+            function pad(n, width, z) {
+                z = z || '0';
+                n = n + '';
+                return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+            }
+
+            function addZ(n) {
+                return (n < 10 ? '0' : '') + n;
+            }
+
+            var ms = s % 1000;
+            s = (s - ms) / 1000;
+            var secs = s % 60;
+            s = (s - secs) / 60;
+            var mins = s % 60;
+            var hrs = (s - mins) / 60;
+
+            return addZ(mins) + ':' + addZ(secs) + '.' + pad(ms, 3);
+        }
+
+        function timeConverter(UNIX_timestamp) {
+            var a = new Date(UNIX_timestamp * 1000);
+            return a.toISOString();
+        }
+
+        var acssApp = angular.module('acssApp', []);
+
+        acssApp.controller('dashboardController',
+        function dashboardController($scope, $http) {
+            $scope.current_session = {
+                server_name: null,
+                track: null,
+                server_info: null,
+                cars: null
+            };
+
+            $scope.set_track = function(track) {
+                $scope.selected_track = track;
+
+                $http.get("api/tracks/" + track + "/bestlaps")
+                    .then(function(response) {
+                        $scope.last_update = Math.floor(response.data.last_update);
+                        $scope.best_laps = response.data.data;
+                    });
+            };
+
+            $http.get("api/tracks").then(function(response) {
+                $scope.tracks = response.data;
+            });
+
+            $http.get("api/server_info")
+                .then(function(response) {
+                    if (response.data.success) {
+                        $scope.current_session.server_name = response.data.data.name;
+                        $scope.set_track(response.data.data.track);
+                        $scope.current_session.track = response.data.data.track;
+                        $scope.current_session.server_info = 'Clients: ' + response.data.data.clients + '/' + response.data.data.maxclients;
+                        $scope.current_session.cars = response.data.data.cars;
+                    }
+                });
+        });
+    </script>
+</head>
+
+<body ng-controller="dashboardController">
+    <div class="container">
+        <div class="col-md-3"></div>
+        <div class="col-md-3">
+            <img src="graphics/logo.png" style="margin: 20px" />
+        </div>
+        <div class="col-md-6" ng-if="current_session.server_name == null">
+
+        </div>
+        <div class="col-md-6" ng-if="current_session.server_name != null">
+            <dl id="boxed-info">
+                <dt>Server</dt>
+                <dd id="server-name">{{current_session.server_name}}</dd>
+                <dt>Track</dt>
+                <dd id="track-name">{{current_session.track}}</dd>
+                <dt>Info</dt>
+                <dd id="info">{{current_session.server_info}}</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="container">
+        <div id="tracks">
+            <div class="btn-group" role="group" aria-label="Basic example">
+              <button type="button" class="btn btn-primary" ng-repeat="track in tracks" ng-click="set_track(track)">{{track}}</button>
+            </div>
+        </div>
+
+        <div id="cars">
+            <p id="last-update">last update: <span>{{last_update}}</span></p>
+            <table class="table">
+                <thead>
+                    <th>#</th>
+                    <th>Driver</th>
+                    <th>Car</th>
+                    <th>Best lap</th>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="item in best_laps">
+                        <td>{{$index+1}}</td>
+                        <td>{{item.driver_name}}</td>
+                        <td>{{item.car_name}}</td>
+                        <td>{{item.best_lap|date: "mm:ss.sss"}}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>#</td>
+                        <td>Driver</td>
+                        <td>Car</td>
+                        <td>Best lap</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>
